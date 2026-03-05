@@ -111,7 +111,7 @@ impl cosmic::Application for AppModel {
         // Construct the app model with the runtime's core.
         let mut app = AppModel {
             core,
-            context_page: ContextPage::default(),
+            context_page: ContextPage::About,
             nav,
             key_binds: HashMap::new(),
             config: Config::default(),
@@ -180,7 +180,10 @@ impl cosmic::Application for AppModel {
             Element::from(menu::root(fl!("view"))),
             menu::items(
                 &self.key_binds,
-                vec![menu::Item::Button(fl!("about"), None, MenuAction::About)],
+                vec![
+                    menu::Item::Button(fl!("about"), None, MenuAction::About),
+                    menu::Item::Button(fl!("settings"), None, MenuAction::Settings),
+                ],
             ),
         )]);
 
@@ -208,6 +211,11 @@ impl cosmic::Application for AppModel {
                 Message::ToggleContextPage(ContextPage::About),
             )
             .title(fl!("about")),
+            ContextPage::Settings => context_drawer::context_drawer(
+                self.settings(),
+                Message::ToggleContextPage(ContextPage::Settings),
+            )
+            .title(fl!("settings")),
         })
     }
 
@@ -406,6 +414,10 @@ impl AppModel {
             .align_x(Alignment::Center)
             .spacing(space_xxs)
             .into()
+    }
+
+    pub fn settings(&self) -> Element<'_, Message> {
+        view_column(vec![]).into()
     }
 
     fn list_fingers_task(&self) -> Task<cosmic::Action<Message>> {

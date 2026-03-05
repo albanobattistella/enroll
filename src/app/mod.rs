@@ -64,6 +64,7 @@ mod app;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MenuAction {
     About,
+    Settings,
 }
 
 impl menu::action::MenuAction for MenuAction {
@@ -72,8 +73,16 @@ impl menu::action::MenuAction for MenuAction {
     fn message(&self) -> Self::Message {
         match self {
             MenuAction::About => Message::ToggleContextPage(ContextPage::About),
+            MenuAction::Settings => Message::ToggleContextPage(ContextPage::Settings),
         }
     }
+}
+
+/// The context page to display in the context drawer.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum ContextPage {
+    About,
+    Settings,
 }
 
 #[cfg(test)]
