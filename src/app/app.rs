@@ -368,7 +368,14 @@ impl AppModel {
     }
 
     pub fn settings(&self) -> Element<'_, Message> {
-        view_column(vec![]).into()
+        let col = column().push(
+            widget::checkbox("Experimental UI", self.config.experimental_ui).on_toggle(|value| {
+                Message::UpdateConfig(Config {
+                    experimental_ui: value,
+                })
+            }),
+        );
+        view_column(vec![col.into()]).into()
     }
 
     fn list_fingers_task(&self) -> Task<cosmic::Action<Message>> {
