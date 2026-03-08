@@ -185,9 +185,10 @@ impl AppModel {
             !self.enrolled_fingers.is_empty()
         };
 
-        let register_btn = button::text(fl!("register"));
-        let delete_btn = button::text(fl!("delete"));
-        let clear_btn = button::text(fl!("clear-device"));
+        let register_btn = button::text(fl!("register")).tooltip(fl!("register-tooltip"));
+        let verify_btn = button::text(fl!("verify")).tooltip(fl!("verify-tooltip"));
+        let delete_btn = button::text(fl!("delete")).tooltip(fl!("delete-tooltip"));
+        let clear_btn = button::text(fl!("clear-device")).tooltip(fl!("clear-tooltip"));
 
         let register_btn = if buttons_enabled && current_finger.is_some() {
             register_btn.on_press(Message::Register)
