@@ -76,7 +76,7 @@ impl AppModel {
         let is_selected = self.selected_finger == finger;
         let is_enrolled = finger
             .as_finger_id()
-            .map_or(false, |id| self.enrolled_fingers.iter().any(|ef| ef == id));
+            .is_some_and(|id| self.enrolled_fingers.iter().any(|ef| ef == id));
 
         let mut label = String::new();
         if is_enrolled {
