@@ -22,6 +22,7 @@ pub enum Message {
     LaunchUrl(String),
     Delete,
     Register,
+    Success,
     ConnectionReady(zbus::Connection),
     DeviceFound(Option<(zbus::zvariant::OwnedObjectPath, DeviceProxy<'static>)>),
     OperationError(AppError),
@@ -34,6 +35,7 @@ pub enum Message {
     ClearComplete(Result<(), AppError>),
     EnrolledFingers(Vec<String>),
     FingerSelected(String),
+    VerifyFinger,
 }
 
 impl AppModel {
@@ -156,6 +158,37 @@ impl AppModel {
             self.busy = true;
             Task::none()
         }
+    }
+
+    pub(crate) fn on_verify_finger(&mut self) -> Task<cosmic::Action<Message>> {
+        if let (Some(path), Some(conn), Some(user)) = (
+            self.device_path.clone(),
+            self.connection.clone(),
+            self.selected_user.clone(),
+        ) {
+            self.busy = true;
+            let path = (*path).clone();
+            let username = user.username.to_string();
+            let finger = self
+                .selected_finger
+                .as_finger_id()
+                .unwrap_or_default()
+                .to_string();
+            return Task::perform(
+                async move { verify_finger_dbus(&conn, path, finger, username).await },
+                |res| match res {
+                    Ok(()) => cosmic::Action::App(Message::Success),
+                    Err(e) => cosmic::Action::App(Message::OperationError(AppError::from(e))),
+                },
+            );
+        }
+        Task::none()
+    }
+
+    pub(crate) fn on_success(&mut self) -> Task<cosmic::Action<Message>> {
+        self.status = fl!("success");
+        self.busy = false;
+        Task::none()
     }
 
     pub(crate) fn on_enroll_start(&mut self, total: Option<u32>) -> Task<cosmic::Action<Message>> {

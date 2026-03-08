@@ -194,6 +194,12 @@ impl AppModel {
             register_btn
         };
 
+        let verify_btn = if buttons_enabled && current_finger.is_some() {
+            verify_btn.on_press(Message::VerifyFinger)
+        } else {
+            verify_btn
+        };
+
         let delete_btn = if buttons_enabled && is_enrolled {
             delete_btn.on_press(Message::Delete)
         } else {
@@ -214,6 +220,7 @@ impl AppModel {
 
         let mut row = widget::row()
             .push(register_btn)
+            .push(verify_btn)
             .push(delete_btn)
             .push(clear_btn);
 

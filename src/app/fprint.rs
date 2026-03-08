@@ -173,6 +173,25 @@ where
     Ok(())
 }
 
+/// Request via DBus for the users fingerprint to be verified.
+///
+/// # Errors
+///
+/// This function will return an error if username is incorrect, building device fails, path is incorrect or claiming device for user fails.
+pub async fn verify_finger_dbus(
+    connection: &zbus::Connection,
+    path: zbus::zvariant::OwnedObjectPath,
+    finger: String,
+    username: String,
+) -> zbus::Result<()> {
+    validate_username(&username)?;
+    let device = DeviceProxy::builder(connection).path(path)?.build().await?;
+
+    device.claim(&username).await?;
+    let _ = device.verify_finger(&finger).await;
+    device.release().await
+}
+
 fn validate_username(username: &str) -> zbus::Result<()> {
     if username.is_empty() {
         return Err(zbus::Error::Failure("Username cannot be empty".to_string()));

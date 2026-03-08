@@ -247,6 +247,8 @@ impl cosmic::Application for AppModel {
             Message::ToggleContextPage(context_page) => self.on_context_page_toggle(context_page),
             Message::UpdateConfig(config) => self.on_update_config(config),
             Message::LaunchUrl(url) => self.on_open_link(url),
+            Message::VerifyFinger => self.on_verify_finger(),
+            Message::Success => self.on_success(),
         }
     }
 
