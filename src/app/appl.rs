@@ -13,7 +13,7 @@ use cosmic::app::context_drawer;
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::{Alignment, Subscription};
 use cosmic::prelude::*;
-use cosmic::widget::{self, column, dialog, menu, nav_bar, settings::view_column, text};
+use cosmic::widget::{self, button, column, dialog, menu, nav_bar, settings::view_column, text};
 use cosmic::{cosmic_theme, theme};
 
 use super::AppModel;
@@ -309,7 +309,17 @@ impl AppModel {
     /// Settings menu
     pub fn settings(&self) -> Element<'_, Message> {
         let cosmic_theme::Spacing { space_xxs, .. } = theme::active().cosmic().spacing;
-        let text = text::title3(fl!("ui"));
+        let text = text::title3(fl!("settings-ui"));
+        let clear = text::title3(fl!("settings-clear-device"));
+        let clear_btn = button::text(fl!("clear-device")).tooltip(fl!("clear-tooltip"));
+
+        let clear_btn =
+            if !self.busy && self.device_path.is_some() && self.enrolling_finger.is_none() {
+                clear_btn.on_press(Message::ClearDevice)
+            } else {
+                clear_btn
+            };
+
         let col = column()
             .push(text)
             .push(
@@ -321,6 +331,8 @@ impl AppModel {
                     },
                 ),
             )
+            .push(clear)
+            .push(clear_btn)
             .spacing(space_xxs);
         view_column(vec![col.into()]).into()
     }

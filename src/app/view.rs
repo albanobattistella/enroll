@@ -195,7 +195,6 @@ impl AppModel {
         let register_btn = button::text(fl!("register")).tooltip(fl!("register-tooltip"));
         let verify_btn = button::text(fl!("verify")).tooltip(fl!("verify-tooltip"));
         let delete_btn = button::text(fl!("delete")).tooltip(fl!("delete-tooltip"));
-        let clear_btn = button::text(fl!("clear-device")).tooltip(fl!("clear-tooltip"));
 
         let register_btn = if buttons_enabled && current_finger.is_some() {
             register_btn.on_press(Message::Register)
@@ -215,23 +214,12 @@ impl AppModel {
             delete_btn
         };
 
-        let clear_btn =
-            if !self.busy && self.device_path.is_some() && self.enrolling_finger.is_none() {
-                clear_btn.on_press(Message::ClearDevice)
-            } else {
-                clear_btn
-            };
-
         let mut cancel_btn = button::text(fl!("cancel"));
         if self.enrolling_finger.is_some() {
             cancel_btn = cancel_btn.on_press(Message::EnrollStop);
         }
 
-        let mut row = row()
-            .push(register_btn)
-            .push(verify_btn)
-            .push(delete_btn)
-            .push(clear_btn);
+        let mut row = row().push(register_btn).push(verify_btn).push(delete_btn);
 
         if self.enrolling_finger.is_some() {
             row = row.push(cancel_btn);
