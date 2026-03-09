@@ -18,6 +18,14 @@ pub async fn find_device(
     Ok((path, device))
 }
 
+/// fprintd DBus API function for requesting users registered prints
+/// # Return
+/// Array containing all users registered fingerprints as strings
+/// # Errors
+/// net.reactivated.Fprint.Error.PermissionDenied:
+/// if the caller lacks the appropriate PolicyKit authorization
+/// net.reactivated.Fprint.Error.NoEnrolledPrints:
+/// if the chosen user doesn't have any fingerprints enrolled
 pub async fn list_enrolled_fingers_dbus(
     device: &DeviceProxy<'static>,
     username: String,
@@ -171,6 +179,65 @@ where
     let _ = device.release().await;
 
     Ok(())
+}
+
+/// Request via DBus for the users fingerprint to be verified.
+///
+/// # Errors
+///net.reactivated.Fprint.Error.PermissionDenied:
+/// if the caller lacks the appropriate PolicyKit authorization
+/// net.reactivated.Fprint.Error.ClaimDevice:
+/// if the device was not claimed
+/// net.reactivated.Fprint.Error.AlreadyInUse:
+/// if the device was already being used
+/// net.reactivated.Fprint.Error.NoActionInProgress:
+/// if there was no ongoing verification
+/// net.reactivated.Fprint.Error.NoEnrolledPrints:
+/// if there are no enrolled prints for the chosen user
+/// net.reactivated.Fprint.Error.Internal:
+/// if there was an internal error
+pub async fn verify_finger_dbus(
+    connection: &zbus::Connection,
+    path: zbus::zvariant::OwnedObjectPath,
+    finger: String,
+    username: String,
+) -> zbus::Result<()> {
+    validate_username(&username)?;
+    let device = DeviceProxy::builder(connection).path(path)?.build().await?;
+
+    device.claim(&username).await?;
+
+    let mut status_stream = match device.receive_verify_status().await {
+        Ok(s) => s,
+        Err(e) => {
+            let _ = device.release().await;
+            return Err(e);
+        }
+    };
+
+    if let Err(e) = device.verify_start(&finger).await {
+        let _ = device.release().await;
+        return Err(e);
+    }
+
+    // TODO: send reference to self and implement Message::VerifyStatus(String)
+    while let Some(signal) = status_stream.next().await {
+        match signal.args() {
+            Ok(args) => {
+                let _result: String = args.result;
+                let done: bool = args.done;
+                if done {
+                    break;
+                }
+            }
+            Err(_e) => {
+                break;
+            }
+        }
+    }
+
+    let _ = device.verify_stop().await;
+    device.release().await
 }
 
 fn validate_username(username: &str) -> zbus::Result<()> {

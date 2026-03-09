@@ -11,9 +11,10 @@ use crate::fl;
 use cosmic::Application;
 use cosmic::app::context_drawer;
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
+use cosmic::iced::futures::channel::mpsc::Sender;
 use cosmic::iced::{Alignment, Subscription};
 use cosmic::prelude::*;
-use cosmic::widget::{self, column, dialog, menu, nav_bar, settings::view_column, text};
+use cosmic::widget::{self, button, column, dialog, menu, nav_bar, settings::view_column, text};
 use cosmic::{cosmic_theme, theme};
 
 use super::AppModel;
@@ -148,7 +149,7 @@ impl cosmic::Application for AppModel {
     /// Chooses which view to render based on config
     fn view(&self) -> Element<'_, Self::Message> {
         if self.config.experimental_ui {
-            self.view_experimental()
+            self.view_old()
         } else {
             self.view_main()
         }
@@ -161,16 +162,14 @@ impl cosmic::Application for AppModel {
     /// beginning of the application, and persist through its lifetime.
     fn subscription(&self) -> Subscription<Self::Message> {
         struct MySubscription;
-        struct EnrollmentSubscription;
 
         let mut subscriptions = vec![
             // Create a subscription which emits updates through a channel.
-            Subscription::run_with_id(
-                std::any::TypeId::of::<MySubscription>(),
+            Subscription::run_with(std::any::TypeId::of::<MySubscription>(), |_id| {
                 cosmic::iced::stream::channel(4, move |_channel| async move {
                     futures_util::future::pending().await
-                }),
-            ),
+                })
+            }),
             // Watch for application configuration changes.
             self.core()
                 .watch_config::<Config>(Self::APP_ID)
@@ -190,20 +189,37 @@ impl cosmic::Application for AppModel {
             &self.connection,
             &self.selected_user,
         ) {
-            let finger_name = finger_name.clone();
-            let device_path = device_path.clone();
-            let connection = connection.clone();
-            let user = user.clone();
+            #[derive(Clone)]
+            struct EnrollData {
+                finger_name: std::sync::Arc<String>,
+                device_path: std::sync::Arc<zbus::zvariant::OwnedObjectPath>,
+                connection: zbus::Connection,
+                username: std::sync::Arc<String>,
+            }
 
-            subscriptions.push(Subscription::run_with_id(
-                std::any::TypeId::of::<EnrollmentSubscription>(),
-                cosmic::iced::stream::channel(100, move |mut output| async move {
+            impl std::hash::Hash for EnrollData {
+                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                    self.finger_name.hash(state);
+                    self.username.hash(state);
+                }
+            }
+
+            let data = EnrollData {
+                finger_name: finger_name.clone(),
+                device_path: device_path.clone(),
+                connection: connection.clone(),
+                username: user.username.clone(),
+            };
+
+            subscriptions.push(Subscription::run_with(data, |data| {
+                let data = data.clone();
+                cosmic::iced::stream::channel(100, move |mut output: Sender<Message>| async move {
                     // Implement enrollment stream here
                     match enroll_fingerprint_process(
-                        connection,
-                        &device_path,
-                        &finger_name,
-                        &user.username,
+                        data.connection,
+                        &data.device_path,
+                        &data.finger_name,
+                        &data.username,
                         &mut output,
                     )
                     .await
@@ -216,8 +232,8 @@ impl cosmic::Application for AppModel {
                         }
                     }
                     futures_util::future::pending().await
-                }),
-            ));
+                })
+            }));
         }
 
         Subscription::batch(subscriptions)
@@ -247,6 +263,8 @@ impl cosmic::Application for AppModel {
             Message::ToggleContextPage(context_page) => self.on_context_page_toggle(context_page),
             Message::UpdateConfig(config) => self.on_update_config(config),
             Message::LaunchUrl(url) => self.on_open_link(url),
+            Message::VerifyFinger => self.on_verify_finger(),
+            Message::Success => self.on_success(),
         }
     }
 
@@ -307,18 +325,30 @@ impl AppModel {
     /// Settings menu
     pub fn settings(&self) -> Element<'_, Message> {
         let cosmic_theme::Spacing { space_xxs, .. } = theme::active().cosmic().spacing;
-        let text = text::title3(fl!("ui"));
+        let text = text::title3(fl!("settings-ui"));
+        let clear = text::title3(fl!("settings-clear-device"));
+        let clear_btn = button::text(fl!("clear-device")).tooltip(fl!("clear-tooltip"));
+
+        let clear_btn =
+            if !self.busy && self.device_path.is_some() && self.enrolling_finger.is_none() {
+                clear_btn.on_press(Message::ClearDevice)
+            } else {
+                clear_btn
+            };
+
         let col = column()
             .push(text)
             .push(
-                widget::checkbox(fl!("alternative-ui"), self.config.experimental_ui).on_toggle(
-                    |value| {
+                widget::checkbox(self.config.experimental_ui)
+                    .on_toggle(|value| {
                         Message::UpdateConfig(Config {
                             experimental_ui: value,
                         })
-                    },
-                ),
+                    })
+                    .label(fl!("alternative-ui")),
             )
+            .push(clear)
+            .push(clear_btn)
             .spacing(space_xxs);
         view_column(vec![col.into()]).into()
     }

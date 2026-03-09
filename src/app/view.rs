@@ -7,28 +7,26 @@ use crate::fl;
 use cosmic::iced::Length;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced_widget::pick_list;
-use cosmic::widget;
-use cosmic::widget::{button, column, container, progress_bar, svg, text};
+use cosmic::widget::{button, column, container, progress_bar, row, svg, text};
 use cosmic::{Apply, Element};
 const FPRINT_ICON: &[u8] = include_bytes!("../../resources/icons/hicolor/scalable/apps/fprint.svg");
 const STATUS_TEXT_SIZE: u16 = 16;
-const PROGRESS_BAR_HEIGHT: u16 = 10;
 pub(crate) const MAIN_PADDING: u16 = 20;
 pub(crate) const MAIN_SPACING: u16 = 20;
 
 impl AppModel {
-    pub(crate) fn view_experimental(&self) -> Element<'_, Message> {
-        let left_hand = widget::row()
+    pub(crate) fn view_main(&self) -> Element<'_, Message> {
+        let left_hand = row()
             .push(self.finger_button(Finger::LeftPinky, 110.0))
             .push(self.finger_button(Finger::LeftRing, 140.0))
             .push(self.finger_button(Finger::LeftMiddle, 150.0))
             .push(self.finger_button(Finger::LeftIndex, 130.0))
-            .push(self.finger_button(Finger::LeftThumb, 100.0))
+            .push(self.finger_button(Finger::LeftThumb, 40.0))
             .spacing(10)
             .align_y(Vertical::Bottom);
 
-        let right_hand = widget::row()
-            .push(self.finger_button(Finger::RightThumb, 100.0))
+        let right_hand = row()
+            .push(self.finger_button(Finger::RightThumb, 40.0))
             .push(self.finger_button(Finger::RightIndex, 130.0))
             .push(self.finger_button(Finger::RightMiddle, 150.0))
             .push(self.finger_button(Finger::RightRing, 140.0))
@@ -36,29 +34,39 @@ impl AppModel {
             .spacing(10)
             .align_y(Vertical::Bottom);
 
-        // let hands = widget::row()
-        //     .push(left_hand)
-        //     .push(right_hand)
-        //     .spacing(50)
-        //     .align_y(Vertical::Bottom);
+        let mut column = column();
 
-        let mut column = column()
-            .push(
-                container(left_hand)
-                    .width(Length::Fill)
-                    .align_x(Horizontal::Center)
-                    .align_y(Vertical::Center)
-                    .padding(MAIN_PADDING),
-            )
-            .push(
-                container(right_hand)
+        if self.core.is_condensed() {
+            column = column
+                .push(
+                    container(left_hand)
+                        .width(Length::Fill)
+                        .align_x(Horizontal::Center)
+                        .align_y(Vertical::Center)
+                        .padding(MAIN_PADDING),
+                )
+                .push(
+                    container(right_hand)
+                        .width(Length::Fill)
+                        .align_x(Horizontal::Center)
+                        .align_y(Vertical::Center)
+                        .padding(MAIN_PADDING),
+                );
+        } else {
+            let hands = row()
+                .push(left_hand)
+                .push(right_hand)
+                .spacing(50)
+                .align_y(Vertical::Bottom);
+            column = column.push(
+                container(hands)
                     .width(Length::Fill)
                     .align_x(Horizontal::Center)
                     .align_y(Vertical::Center)
                     .padding(MAIN_PADDING),
             );
-
-        column = column.push(self.view_icon()).push(self.view_status());
+        }
+        column = column.push(self.view_status());
 
         if let Some(progress) = self.view_progress() {
             column = column.push(progress);
@@ -77,26 +85,24 @@ impl AppModel {
         let is_enrolled = finger
             .as_finger_id()
             .is_some_and(|id| self.enrolled_fingers.iter().any(|ef| ef == id));
-
-        let mut label = String::new();
+        let svg = svg(svg::Handle::from_memory(FPRINT_ICON));
+        let mut label = finger.localized_name();
         if is_enrolled {
-            label.push_str("✓ ");
-        }
-        if is_selected {
-            label.push_str("[ ");
-        }
-        label.push_str(&finger.localized_name());
-        if is_selected {
-            label.push_str(" ]");
+            label.push_str(" ✓");
         }
 
-        button::text(label)
+        button::custom_image_button(svg, None)
+            .width(40)
             .height(Length::Fixed(height))
             .on_press(Message::FingerSelected(finger.localized_name()))
+            .selected(is_selected)
+            .description(label)
+            //.label(label)
+            //.tooltip(label)
             .into()
     }
 
-    pub(crate) fn view_main(&self) -> Element<'_, Message> {
+    pub(crate) fn view_old(&self) -> Element<'_, Message> {
         let mut column = column().push(self.view_header()).push(self.view_status());
 
         if let Some(picker) = self.view_finger_picker() {
@@ -157,7 +163,7 @@ impl AppModel {
     pub(crate) fn view_status(&self) -> Element<'_, Message> {
         text(&self.status)
             .size(STATUS_TEXT_SIZE)
-            .apply(widget::container)
+            .apply(container)
             .width(Length::Fill)
             .align_x(Horizontal::Center)
             .into()
@@ -166,11 +172,8 @@ impl AppModel {
     pub(crate) fn view_progress(&self) -> Option<Element<'_, Message>> {
         self.enrolling_finger.as_ref()?;
 
-        self.enroll_total_stages.map(|total| {
-            progress_bar(0.0..=(total as f32), self.enroll_progress as f32)
-                .height(PROGRESS_BAR_HEIGHT)
-                .into()
-        })
+        self.enroll_total_stages
+            .map(|total| progress_bar(0.0..=(total as f32), self.enroll_progress as f32).into())
     }
 
     pub(crate) fn view_controls(&self) -> Element<'_, Message> {
@@ -184,14 +187,20 @@ impl AppModel {
             !self.enrolled_fingers.is_empty()
         };
 
-        let register_btn = button::text(fl!("register"));
-        let delete_btn = button::text(fl!("delete"));
-        let clear_btn = button::text(fl!("clear-device"));
+        let register_btn = button::text(fl!("register")).tooltip(fl!("register-tooltip"));
+        let verify_btn = button::text(fl!("verify")).tooltip(fl!("verify-tooltip"));
+        let delete_btn = button::text(fl!("delete")).tooltip(fl!("delete-tooltip"));
 
         let register_btn = if buttons_enabled && current_finger.is_some() {
             register_btn.on_press(Message::Register)
         } else {
             register_btn
+        };
+
+        let verify_btn = if buttons_enabled && current_finger.is_some() {
+            verify_btn.on_press(Message::VerifyFinger)
+        } else {
+            verify_btn
         };
 
         let delete_btn = if buttons_enabled && is_enrolled {
@@ -200,28 +209,18 @@ impl AppModel {
             delete_btn
         };
 
-        let clear_btn =
-            if !self.busy && self.device_path.is_some() && self.enrolling_finger.is_none() {
-                clear_btn.on_press(Message::ClearDevice)
-            } else {
-                clear_btn
-            };
-
         let mut cancel_btn = button::text(fl!("cancel"));
         if self.enrolling_finger.is_some() {
             cancel_btn = cancel_btn.on_press(Message::EnrollStop);
         }
 
-        let mut row = widget::row()
-            .push(register_btn)
-            .push(delete_btn)
-            .push(clear_btn);
+        let mut row = row().push(register_btn).push(verify_btn).push(delete_btn);
 
         if self.enrolling_finger.is_some() {
             row = row.push(cancel_btn);
         }
 
-        row.apply(widget::container)
+        row.apply(container)
             .width(Length::Fill)
             .height(Length::Fill)
             .align_x(Horizontal::Center)

@@ -3,13 +3,14 @@ about = About
 settings = Settings
 view = View
 fprint = Enroll
-ui = User Interface
 welcome = Register and/or delete fingerprints
 git-description = Git commit {$hash} on {$date}
 alternative-ui = Alternative UI
 
 register = Register
+verify = Verify
 delete = Delete
+success = Success
 deleted = Deleted fingerprint.
 deleting = Deleting fingerprint...
 clear-device = Clear Device
@@ -18,6 +19,24 @@ clearing-device = Clearing all fingerprints from device for all known users...
 device-cleared = Device cleared for all known users.
 clear-device-confirm = Are you sure you want to clear fingerprints for ALL known users?
 cancel = Cancel
+
+settings-ui = User Interface
+settings-clear-device = Remove all fingerprints
+
+register-tooltip = Registers a new fingerprint
+delete-tooltip = Deletes this fingerprint
+clear-tooltip = Only works for still existing users
+verify-tooltip = Verifies the fingerprint against the enrolled fingerprints
+
+verify-finger = Place {$finger} on reader
+verify-no-match = Fingerprint did not match
+verify-match = Fingerprint matched
+verify-swipe-too-short = Swipe was too short. Try again.
+verify-finger-not-centered = Finger was not centered. Try again.
+verify-remove-and-retry = Remove finger and try again.
+verify-too-fast = Too fast touch. Try again.
+verify-disconnected = Device disconnected. Close window.
+verify-unknown-error = There was an unknown error.
 
 page-right-thumb = Right Thumb
 page-right-index-finger = Right Index Finger
