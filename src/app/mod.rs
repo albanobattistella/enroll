@@ -58,7 +58,7 @@ pub struct AppModel {
     confirm_clear: bool,
 }
 
-mod appl;
+mod application;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MenuAction {

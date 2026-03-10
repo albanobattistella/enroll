@@ -23,7 +23,7 @@ use std::collections::HashMap;
 
 const APP_ICON: &[u8] = include_bytes!("../../resources/icons/hicolor/scalable/apps/enroll.svg");
 
-/// Create a COSMIC application from the app model
+/// COSMIC application from AppModel
 impl cosmic::Application for AppModel {
     /// The async executor that will be used to run your application's commands.
     type Executor = cosmic::executor::Default;
