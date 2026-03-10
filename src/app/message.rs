@@ -149,6 +149,9 @@ impl AppModel {
         Task::none()
     }
 
+    /// Requests users enrolled prints
+    ///
+    /// **Returns** either ***Task***() or ***list_fingers_task***()
     pub(crate) fn on_device_found(
         &mut self,
         device_info: Option<(zbus::zvariant::OwnedObjectPath, DeviceProxy<'static>)>,
@@ -173,6 +176,9 @@ impl AppModel {
         }
     }
 
+    /// Called to request verification of the selected print
+    ///
+    /// **Returns** either ***Task***() or ***task_verify_finger***()
     pub(crate) fn on_verify_finger(&mut self) -> Task<cosmic::Action<Message>> {
         if let (Some(path), Some(conn), Some(user)) = (
             self.device_path.clone(),
@@ -187,23 +193,23 @@ impl AppModel {
                 .as_finger_id()
                 .unwrap_or_default()
                 .to_string();
-            return Task::perform(
-                async move { verify_finger_dbus(&conn, path, finger, username).await },
-                |res| match res {
-                    Ok(()) => cosmic::Action::App(Message::Success),
-                    Err(e) => cosmic::Action::App(Message::OperationError(AppError::from(e))),
-                },
-            );
+            return task_verify_finger(path, username, finger, conn);
         }
         Task::none()
     }
 
+    /// Sets the status to success and resets busy state
+    ///
+    /// **Returns** ***Task***()
     pub(crate) fn on_success(&mut self) -> Task<cosmic::Action<Message>> {
         self.status = fl!("success");
         self.busy = false;
         Task::none()
     }
 
+    /// Starts the enroll process, set status and enroll options
+    ///
+    /// **Returns** ***Task***()
     pub(crate) fn on_enroll_start(&mut self, total: Option<u32>) -> Task<cosmic::Action<Message>> {
         self.enroll_total_stages = total;
         self.enroll_progress = 0;
@@ -211,6 +217,11 @@ impl AppModel {
         Task::none()
     }
 
+    /// Takes responses from Fprintd API and converts them to localized strings
+    ///
+    /// Set status and ends process when it is done
+    ///
+    /// **Returns** ***Task***()
     pub(crate) fn on_enroll_status(
         &mut self,
         status: String,
@@ -248,28 +259,20 @@ impl AppModel {
         Task::none()
     }
 
+    /// Sends stop signal to end an ongoing enroll process
+    ///
+    /// **Returns** either ***Task***() or ***task_enroll_stop***()
     pub(crate) fn on_enroll_stop(&self) -> Task<cosmic::Action<Message>> {
         if let (Some(path), Some(conn)) = (self.device_path.clone(), self.connection.clone()) {
             let path = (*path).clone();
-            return Task::perform(
-                async move {
-                    let device = DeviceProxy::builder(&conn).path(path)?.build().await?;
-                    let _ = device.enroll_stop().await;
-                    device.release().await?;
-                    Ok::<(), zbus::Error>(())
-                },
-                |res| match res {
-                    Ok(_) => cosmic::Action::App(Message::EnrollStatus(
-                        "enroll-cancelled".to_string(),
-                        true,
-                    )),
-                    Err(e) => cosmic::Action::App(Message::OperationError(AppError::from(e))),
-                },
-            );
+            return task_enroll_stop(path, conn);
         }
         Task::none()
     }
 
+    /// Clears all prints for all users
+    ///
+    /// **Returns** either ***Task***() or ***task_clear_device***()
     pub(crate) fn on_clear_device(&mut self) -> Task<cosmic::Action<Message>> {
         if !self.confirm_clear {
             self.confirm_clear = true;
@@ -282,19 +285,14 @@ impl AppModel {
             self.confirm_clear = false;
             let path = (*path).clone();
             let usernames: Vec<String> = self.users.iter().map(|u| (*u.username).clone()).collect();
-            return Task::perform(
-                async move {
-                    match clear_all_fingers_dbus(&conn, path, usernames).await {
-                        Ok(_) => Message::ClearComplete(Ok(())),
-                        Err(e) => Message::ClearComplete(Err(AppError::from(e))),
-                    }
-                },
-                cosmic::Action::App,
-            );
+            return task_clear_device(path, usernames, conn);
         }
         Task::none()
     }
 
+    /// Deletes chosen print or users all prints depending on choices from the user
+    ///
+    /// **Returns** either ***Task***(), ***task_delete_print***() or ***task_delete_prints***()
     pub(crate) fn on_delete(&mut self) -> Task<cosmic::Action<Message>> {
         if let (Some(path), Some(conn), Some(user)) = (
             self.device_path.clone(),
@@ -308,30 +306,17 @@ impl AppModel {
 
             if let Some(finger_name) = self.selected_finger.as_finger_id() {
                 let finger_name = finger_name.to_string();
-                return Task::perform(
-                    async move {
-                        match delete_fingerprint_dbus(&conn, path, finger_name, username).await {
-                            Ok(_) => Message::DeleteComplete,
-                            Err(e) => Message::OperationError(AppError::from(e)),
-                        }
-                    },
-                    cosmic::Action::App,
-                );
+                return task_delete_print(path, username, finger_name, conn);
             } else {
-                return Task::perform(
-                    async move {
-                        match delete_fingers(&conn, path, username).await {
-                            Ok(_) => Message::DeleteComplete,
-                            Err(e) => Message::OperationError(AppError::from(e)),
-                        }
-                    },
-                    cosmic::Action::App,
-                );
+                return task_delete_prints(path, username, conn);
             }
         }
         Task::none()
     }
 
+    /// Set state when deletion of prints was succesful and removes from enrolled_fingers
+    ///
+    /// **Returns** ***Task***()
     pub(crate) fn on_delete_complete(&mut self) -> Task<cosmic::Action<Message>> {
         self.status = fl!("deleted");
         self.busy = false;
@@ -345,6 +330,9 @@ impl AppModel {
         Task::none()
     }
 
+    /// Opens given Uniform Resourse Locator
+    ///
+    /// **Returns** ***Task***()
     pub(crate) fn on_open_link(&mut self, url: String) -> Task<cosmic::Action<Message>> {
         match open::that_detached(&url) {
             Ok(()) => Task::none(),
@@ -355,6 +343,9 @@ impl AppModel {
         }
     }
 
+    /// Sets state as busy and sets which finger is being registered for subscription
+    ///
+    /// **Returns** ***Task***()
     pub(crate) fn on_register(&mut self) -> Task<cosmic::Action<Message>> {
         self.busy = true;
         if let Some(finger_id) = self.selected_finger.as_finger_id() {
@@ -364,13 +355,16 @@ impl AppModel {
         Task::none()
     }
 
+    /// Sets the config state as the given on and writes it to disk
+    ///
+    /// **Returns** ***Task***()
     pub(crate) fn on_update_config(&mut self, config: Config) -> Task<cosmic::Action<Message>> {
         self.config = config.clone();
 
         tokio::task::spawn_blocking(move || {
             use cosmic::cosmic_config::{self, CosmicConfigEntry};
             use cosmic::Application;
-            
+
             if let Ok(context) = cosmic_config::Config::new(AppModel::APP_ID, Config::VERSION) {
                 if let Err(err) = config.write_entry(&context) {
                     tracing::error!("failed to write config: {}", err);
