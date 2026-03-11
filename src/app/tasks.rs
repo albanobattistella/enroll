@@ -6,6 +6,9 @@ use crate::fprint_dbus::*;
 use cosmic::Task;
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 
+/// **Returns** ***Task*** which:
+///
+/// Request deletion of users all prints
 pub fn task_delete_prints(
     path: zbus::zvariant::OwnedObjectPath,
     username: String,
@@ -22,6 +25,9 @@ pub fn task_delete_prints(
     )
 }
 
+/// **Returns** ***Task*** which:
+///
+/// Requests deletion of given users given print
 pub fn task_delete_print(
     path: zbus::zvariant::OwnedObjectPath,
     username: String,
@@ -39,6 +45,9 @@ pub fn task_delete_print(
     )
 }
 
+/// **Returns** ***Task*** which:
+///
+/// Sends a signal to stop current enroll process
 pub fn task_enroll_stop(
     path: zbus::zvariant::OwnedObjectPath,
     conn: zbus::Connection,
@@ -59,6 +68,8 @@ pub fn task_enroll_stop(
     )
 }
 
+/// **Returns** ***Task*** which:
+/// Requests print of the user to be matched against finger on the sensor
 pub fn task_verify_finger(
     path: zbus::zvariant::OwnedObjectPath,
     username: String,
@@ -74,6 +85,9 @@ pub fn task_verify_finger(
     )
 }
 
+/// **Returns** ***Task*** which:
+///
+/// Requests deletion of all prints for all users
 pub fn task_clear_device(
     path: zbus::zvariant::OwnedObjectPath,
     usernames: Vec<String>,
@@ -90,6 +104,8 @@ pub fn task_clear_device(
     )
 }
 
+/// **Returns** ***Task*** which:
+/// Uses zbus to find and return default fingerprint scanner device
 pub fn task_find_device(conn_clone: zbus::Connection) -> Task<cosmic::Action<Message>> {
     Task::perform(
         async move {
@@ -109,7 +125,8 @@ pub fn task_find_device(conn_clone: zbus::Connection) -> Task<cosmic::Action<Mes
     )
 }
 
-/// Task that connects to DBus
+/// **Returns** ***Task*** which:
+/// Connects to DBus
 pub fn task_connect() -> Task<cosmic::Action<Message>> {
     Task::perform(
         async move {
@@ -122,7 +139,8 @@ pub fn task_connect() -> Task<cosmic::Action<Message>> {
     )
 }
 
-/// Task to parses the configuration
+/// **Returns** ***Task*** which:
+/// parses the configuration
 pub fn task_config(app_id: String) -> Task<cosmic::Action<Message>> {
     Task::perform(
         async move {
