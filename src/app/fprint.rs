@@ -37,7 +37,7 @@ pub async fn find_device(
 /// ***net.reactivated.Fprint.Error.Internal:***
 /// if the device couldn't be claimed
 pub async fn list_enrolled_fingers_dbus(
-    device: &DeviceProxy<'static>,
+    device: DeviceProxy<'static>,
     username: String,
 ) -> zbus::Result<Vec<String>> {
     validate_username(&username)?;

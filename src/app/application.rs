@@ -342,7 +342,7 @@ impl AppModel {
             let username = (*user.username).clone();
             return Task::perform(
                 async move {
-                    match list_enrolled_fingers_dbus(&proxy, username).await {
+                    match list_enrolled_fingers_dbus(proxy, username).await {
                         Ok(fingers) => Message::EnrolledFingers(fingers),
                         Err(e) => Message::OperationError(
                             AppError::from(e).with_context("Failed to list fingers"),

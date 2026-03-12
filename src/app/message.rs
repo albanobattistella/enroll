@@ -115,6 +115,10 @@ impl AppModel {
     /// **Returns** ***Task***()
     pub(crate) fn on_error(&mut self, err: AppError) -> Task<cosmic::Action<Message>> {
         self.status = err.localized_message();
+        if self.status == fl!("error-no-enrolled-prints") {
+            self.enrolled_fingers.clear();
+            self.status = fl!("success");
+        }
         self.busy = false;
         self.enrolling_finger = None;
         Task::none()
@@ -334,7 +338,7 @@ impl AppModel {
         if clear {
             self.enrolled_fingers.clear();
         } else {
-            self.enrolled_fingers.retain(|f| f != &self.selected_finger.localized_name());
+            self.enrolled_fingers.retain(|f| f != self.selected_finger.as_finger_id().unwrap());
         }
 
         Task::none()
