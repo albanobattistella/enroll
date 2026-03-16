@@ -2,17 +2,18 @@ app-id: org.cosmic_utils.enroll
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
+base: com.system76.Cosmic.BaseApp
+base-version: stable
 command: cosmic-utils-enroll
 finish-args:
   - --socket=wayland
   - --socket=fallback-x11
   - --share=ipc
   - --device=dri
-  # Allow talking to fprintd
   - --system-talk-name=net.reactivated.Fprint
-  # Allow talking to PolicyKit for authentication
   - --system-talk-name=org.freedesktop.PolicyKit1
-
+  - --system-talk-name=org.freedesktop.Accounts
+  - --talk-name=com.system76.CosmicSettingsDaemon
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
 
@@ -25,6 +26,7 @@ modules:
   - name: cosmic-utils-enroll
     buildsystem: simple
     build-commands:
+      - cargo --offline fetch --manifest-path Cargo.toml
       - cargo build --offline --release
 
       - install -Dm0755 target/release/cosmic-utils-enroll /app/bin/cosmic-utils-enroll
