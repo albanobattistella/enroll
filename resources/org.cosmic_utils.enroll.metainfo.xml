@@ -5,6 +5,8 @@
   <project_license>MPL-2.0</project_license>
   <name>Enroll</name>
   <summary>Fingerprint record management</summary>
+  <summary xml:lang="cs">GUI vytvořené pomocí toolkitu COSMIC pro registraci otisků prstů pomocí fprintd</summary>
+  <summary xml:lang="fi">Sormenjälkien hallinointi</summary>
   <developer id="org.cosmic-utils">
     <name>Joonas Tuomi</name>
   </developer>
@@ -12,6 +14,12 @@
     <p>
       Fingerprint management for single and multi-user systems. Allows you to register, verify and delete prints.
     </p>
+    <p xml:lang="cs">
+      Správa otisků prstů pro víceuživatelské systémy pomocí služby fprintd. Umožňuje registrovat a mazat otisky prstů pro ověřování ve vašem systému Linux.
+    </p>
+    <p xml:lang="fi">
+      Sormenjälkien hallinnointi yhden ja useamman käyttäjän järjestelmille. Sallii sinun luoda, varmentaa sekä poistaa jälkiä.
+     </p>
   </description>
   <icon type="remote" width="64" height="64" scale="1">
     https://github.com/cosmic-utils/enroll/raw/main/resources/icons/hicolor/scalable/apps/enroll.svg
@@ -37,6 +45,12 @@
     <keyword>Fingerprint</keyword>
     <keyword>Authentication</keyword>
     <keyword>COSMIC</keyword>
+    <keyword xml:lang="cs">Otisky prstů</keyword>
+    <keyword xml:lang="cs">Ověřování</keyword>
+    <keyword xml:lang="cs">COSMIC</keyword>
+    <keyword xml:lang="fi">Sormenjälki</keyword>
+    <keyword xml:lang="fi">Tunnistautuminen</keyword>
+    <keyword xml:lang="fi">COSMIC</keyword>
   </keywords>
   <branding>
     <color type="primary" scheme_preference="light">#7ea5ae</color>
@@ -50,6 +64,8 @@
     <image
 			>https://user.fm/files/v2-1be40ab863867624714661b062d93218/main.png</image>
     <caption>Main UI</caption>
+     <caption xml:lang="cs">Hlavní UI</caption>
+     <caption xml:lang="fi">Pääkäyttöliittymä</caption>
     </screenshot>
   </screenshots>
   <releases>
