@@ -1,6 +1,7 @@
 use crate::app::{AppModel, message::Message};
 use crate::config::{AppTheme, Config};
 use crate::fl;
+use cosmic::iced::Alignment;
 use cosmic::widget::settings::item::builder;
 use cosmic::widget::settings::{item_row, section, view_column};
 use cosmic::{
@@ -23,29 +24,33 @@ impl AppModel {
 
         let theme_section = section()
             .title(fl!("settings-ui"))
-            .add(builder(fl!("settings-theme")).control(item_row(vec![
-                    radio(
-                        text::heading(fl!("theme-system")),
-                        AppTheme::System,
-                        Some(self.config.app_theme),
-                        Message::ThemeSetting,
-                    )
-                    .into(),
-                    radio(
-                        text::heading(fl!("theme-light")),
-                        AppTheme::Light,
-                        Some(self.config.app_theme),
-                        Message::ThemeSetting,
-                    )
-                    .into(),
-                    radio(
-                        text::heading(fl!("theme-dark")),
-                        AppTheme::Dark,
-                        Some(self.config.app_theme),
-                        Message::ThemeSetting,
-                    )
-                    .into(),
-                ])))
+            .add(
+                builder(fl!("settings-theme"))
+                    .control(item_row(vec![
+                        radio(
+                            text::heading(fl!("theme-system")),
+                            AppTheme::System,
+                            Some(self.config.app_theme),
+                            Message::ThemeSetting,
+                        )
+                        .into(),
+                        radio(
+                            text::heading(fl!("theme-light")),
+                            AppTheme::Light,
+                            Some(self.config.app_theme),
+                            Message::ThemeSetting,
+                        )
+                        .into(),
+                        radio(
+                            text::heading(fl!("theme-dark")),
+                            AppTheme::Dark,
+                            Some(self.config.app_theme),
+                            Message::ThemeSetting,
+                        )
+                        .into(),
+                    ]))
+                    .wrap(),
+            )
             .add(
                 builder(fl!("alternative-ui")).control(
                     checkbox(self.config.experimental_ui)

@@ -86,6 +86,7 @@
         <ul>
           <li>Configuration is loaded and theme applied on startup</li>
           <li>Theme setting change works better on COSMIC</li>
+          <li>Settings aesthetics overhauled</li>
           <li>Improved Czech translation</li>
           <li>Bigger Icon with added whitespace</li>
           <li>Fixed formatting of Release information</li>
