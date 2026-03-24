@@ -5,8 +5,9 @@
   <project_license>MPL-2.0</project_license>
   <name>Enroll</name>
   <summary>Fingerprint record management</summary>
-  <summary xml:lang="cs">GUI vytvořené pomocí toolkitu COSMIC pro registraci otisků prstů pomocí fprintd</summary>
+  <summary xml:lang="cs">Správa otisků prstů</summary>
   <summary xml:lang="fi">Sormenjälkien hallinointi</summary>
+  <summary xml:lang="se">Fingerprint registreringshantering</summary>
   <developer id="org.cosmic-utils">
     <name>Joonas Tuomi</name>
   </developer>
@@ -15,10 +16,13 @@
       Fingerprint management for single and multi-user systems. Allows you to register, verify and delete prints.
     </p>
     <p xml:lang="cs">
-      Správa otisků prstů pro víceuživatelské systémy pomocí služby fprintd. Umožňuje registrovat a mazat otisky prstů pro ověřování ve vašem systému Linux.
+      Správa otisků prstů pro jednoho i více uživatelů. Umožňuje registrovat, ověřovat a mazat otisky.
     </p>
     <p xml:lang="fi">
       Sormenjälkien hallinnointi yhden ja useamman käyttäjän järjestelmille. Sallii sinun luoda, varmentaa sekä poistaa jälkiä.
+     </p>
+     <p xml:lang="se">
+       Fingerprint registreringshantering för enskilda och flera användare. Tillåter dig att registrera, verifiera och ta bort fingeravtryck.
      </p>
   </description>
   <icon type="remote" width="64" height="64" scale="1">
@@ -26,7 +30,7 @@
   </icon>
   <launchable type="desktop-id">org.cosmic_utils.enroll.desktop</launchable>
   <provides>
-      <binary>cosmic-utils-enroll</binary>
+    <binary>cosmic-utils-enroll</binary>
   </provides>
   <requires>
     <display_length compare="ge">360</display_length>
@@ -51,6 +55,9 @@
     <keyword xml:lang="fi">Sormenjälki</keyword>
     <keyword xml:lang="fi">Tunnistautuminen</keyword>
     <keyword xml:lang="fi">COSMIC</keyword>
+    <keyword xml:lang="se">Fingerprint</keyword>
+    <keyword xml:lang="se">Autentisering</keyword>
+    <keyword xml:lang="se">COSMIC</keyword>
   </keywords>
   <branding>
     <color type="primary" scheme_preference="light">#7ea5ae</color>
@@ -61,22 +68,43 @@
   <url type="vcs-browser">https://github.com/cosmic-utils/enroll</url>
   <screenshots>
     <screenshot type="default">
-    <image
-			>https://user.fm/files/v2-1be40ab863867624714661b062d93218/main.png</image>
-    <caption>Main UI</caption>
-     <caption xml:lang="cs">Hlavní UI</caption>
-     <caption xml:lang="fi">Pääkäyttöliittymä</caption>
+      <image>
+        https://user.fm/files/v2-1be40ab863867624714661b062d93218/main.png
+      </image>
+      <caption>Main UI</caption>
+      <caption xml:lang="cs">Hlavní UI</caption>
+      <caption xml:lang="fi">Pääkäyttöliittymä</caption>
+      <caption xml:lang="se">Huvudsida</caption>
     </screenshot>
   </screenshots>
   <releases>
-  	<release version="1.0.4" date="2026-03-21">
+    <release version="1.0.5" date="2026-03-24">
       <description>
         <p>
-          - Updated dependencies
-          - Flathub friendlier metadata
-          - Added Setting section for Theme
-          - New Czech translation
+          Changes:
         </p>
+        <ul>
+          <li>Configuration is loaded and theme applied on startup</li>
+          <li>Theme setting change works better on COSMIC</li>
+          <li>Settings aesthetics overhauled</li>
+          <li>Improved Czech translation</li>
+          <li>Bigger Icon with added whitespace</li>
+          <li>Fixed formatting of Release information</li>
+          <li>Lowered the window width limit and raised height</li>
+        </ul>
+      </description>
+    </release>
+    <release version="1.0.4" date="2026-03-21">
+      <description>
+        <p>
+          Changes:
+        </p>
+        <ul>
+          <li>Updated dependencies</li>
+          <li>Flathub friendlier metadata</li>
+          <li>Added Setting section for Theme</li>
+          <li>New Czech translation</li>
+        </ul>
       </description>
     </release>
     <release version="1.0.3" date="2026-03-17">

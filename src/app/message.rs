@@ -4,9 +4,10 @@ use crate::app::AppModel;
 use crate::app::error::AppError;
 use crate::app::tasks::*;
 use crate::app::{ContextPage, Finger};
-use crate::config::{AppTheme, Config, is_cosmic_desktop};
+use crate::config::{AppTheme, Config};
 use crate::fl;
 use crate::fprint_dbus::DeviceProxy;
+use cosmic::cosmic_config::CosmicConfigEntry;
 use cosmic::{Task, command};
 use std::sync::Arc;
 use tracing::info;
@@ -379,16 +380,10 @@ impl AppModel {
     pub(crate) fn on_update_config(&mut self, config: Config) -> Task<cosmic::Action<Message>> {
         self.config = config.clone();
 
-        tokio::task::spawn_blocking(move || {
-            use cosmic::Application;
-            use cosmic::cosmic_config::{self, CosmicConfigEntry};
-
-            if let Ok(context) = cosmic_config::Config::new(AppModel::APP_ID, Config::VERSION)
-                && let Err(err) = config.write_entry(&context)
-            {
+        if let Some(handler) = &self.config_handler
+            && let Err(err) = config.write_entry(handler) {
                 tracing::error!("failed to write config: {}", err);
             }
-        });
 
         Task::none()
     }
@@ -421,15 +416,7 @@ impl AppModel {
             ..self.config.clone()
         })];
 
-        let task = if theme == AppTheme::Dark {
-            command::set_theme(cosmic::Theme::dark())
-        } else if theme == AppTheme::Light {
-            command::set_theme(cosmic::Theme::light())
-        } else if is_cosmic_desktop() {
-            command::set_theme(cosmic::theme::system_preference())
-        } else {
-            Task::none()
-        };
+        let task = cosmic::command::set_theme(theme.theme());
 
         tasks.push(task);
         Task::batch(tasks)

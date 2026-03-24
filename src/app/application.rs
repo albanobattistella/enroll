@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
-use crate::app::tasks::{task_config, task_connect};
-use crate::app::{error::*, finger::*, fprint::*, subscription::*, users::*};
-
 use crate::app::message::{Message, REPOSITORY};
+use crate::app::tasks::task_connect;
 use crate::app::{ContextPage, MenuAction};
-use crate::config::{AppTheme, Config};
+use crate::app::{error::*, finger::*, fprint::*, subscription::*, users::*};
+use crate::config::{Config, read_config};
 use crate::fl;
-
 use cosmic::app::context_drawer;
 
 use cosmic::iced::{Alignment, Subscription};
@@ -14,7 +12,7 @@ use cosmic::{
     cosmic_theme,
     prelude::*,
     theme,
-    widget::{self, button, column, dialog, menu, nav_bar, radio, settings::view_column, text},
+    widget::{self, column, dialog, menu, nav_bar, text},
 };
 
 use super::AppModel;
@@ -34,7 +32,7 @@ impl cosmic::Application for AppModel {
     type Message = Message;
 
     /// Unique identifier in RDNN (reverse domain name notation) format.
-    const APP_ID: &'static str = "org.cosmic_utils.Enroll";
+    const APP_ID: &'static str = "org.cosmic_utils.enroll";
 
     fn core(&self) -> &cosmic::Core {
         &self.core
@@ -49,14 +47,22 @@ impl cosmic::Application for AppModel {
         mut core: cosmic::Core,
         _flags: Self::Flags,
     ) -> (Self, Task<cosmic::Action<Self::Message>>) {
+        // Gets users
         let (users, nav, selected_user) = initialize_users();
+
+        // Load configuration
+        let (config_handler, config) = read_config(Self::APP_ID);
+
+        // Start with navigation closed
         core.nav_bar_toggle();
+
         let mut app = AppModel {
             core,
             context_page: ContextPage::About,
             nav,
             key_binds: HashMap::new(),
-            config: Config::default(),
+            config,
+            config_handler,
             status: fl!("status-connecting"),
             device_path: None,
             device_proxy: None,
@@ -73,11 +79,11 @@ impl cosmic::Application for AppModel {
             confirm_clear: false,
         };
 
+        let start_theme = cosmic::command::set_theme(app.config.app_theme.theme());
         let command = app.update_title_task();
         let connect_task = task_connect();
-        let config_task = task_config(Self::APP_ID.to_string());
 
-        (app, Task::batch(vec![command, connect_task, config_task]))
+        (app, Task::batch(vec![command, connect_task, start_theme]))
     }
 
     /// Elements to pack at the start of the header bar.
@@ -306,65 +312,6 @@ impl AppModel {
             .align_x(Alignment::Center)
             .spacing(space_xxs)
             .into()
-    }
-
-    /// Settings menu
-    pub fn settings(&self) -> Element<'_, Message> {
-        let cosmic_theme::Spacing { space_xxs, .. } = theme::active().cosmic().spacing;
-        let sel_theme = text::title3(fl!("settings-theme"));
-        let text = text::title3(fl!("settings-ui"));
-        let clear = text::title3(fl!("settings-clear-device"));
-        let clear_btn = button::text(fl!("clear-device")).tooltip(fl!("clear-tooltip"));
-
-        let clear_btn =
-            if !self.busy && self.device_path.is_some() && self.enrolling_finger.is_none() {
-                clear_btn.on_press(Message::ClearDevice)
-            } else {
-                clear_btn
-            };
-
-        let selected = Some(self.config.app_theme);
-        let system = radio(
-            text::heading(fl!("theme-system")),
-            AppTheme::System,
-            selected,
-            Message::ThemeSetting,
-        );
-
-        let light = radio(
-            text::heading(fl!("theme-light")),
-            AppTheme::Light,
-            selected,
-            Message::ThemeSetting,
-        );
-
-        let dark = radio(
-            text::heading(fl!("theme-dark")),
-            AppTheme::Dark,
-            selected,
-            Message::ThemeSetting,
-        );
-
-        let col = column()
-            .push(sel_theme)
-            .push(system)
-            .push(light)
-            .push(dark)
-            .push(text)
-            .push(
-                widget::checkbox(self.config.experimental_ui)
-                    .on_toggle(|value| {
-                        Message::UpdateConfig(Config {
-                            app_theme: self.config.app_theme,
-                            experimental_ui: value,
-                        })
-                    })
-                    .label(fl!("alternative-ui")),
-            )
-            .push(clear)
-            .push(clear_btn)
-            .spacing(space_xxs);
-        view_column(vec![col.into()]).into()
     }
 
     /// Gets all registered prints for requested user

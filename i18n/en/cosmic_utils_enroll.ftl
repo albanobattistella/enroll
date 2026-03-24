@@ -8,6 +8,8 @@ git-description = Git commit {$hash} on {$date}
 register = Register
 verify = Verify
 delete = Delete
+danger = Danger
+cancel = Cancel
 success = Success. Now go register a print.
 deleted = Deleted fingerprint.
 deleting = Deleting fingerprint...
@@ -16,7 +18,6 @@ confirm-clear = Are you sure?
 clearing-device = Clearing all fingerprints from device for all known users...
 device-cleared = Device cleared for all known users.
 clear-device-confirm = Are you sure you want to clear fingerprints for ALL known users?
-cancel = Cancel
 
 settings-ui = User Interface
 alternative-ui = Alternative UI
